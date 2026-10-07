@@ -29,13 +29,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Closed manually (see below) so the folder picker doesn't dismiss the popover.
         popover.behavior = .applicationDefined
         popover.animates = false
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(applicationDidResignActive),
-            name: NSApplication.didResignActiveNotification,
-            object: nil
-        )
     }
 
     @objc private func togglePopover() {
@@ -66,7 +59,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.performClose(nil)
     }
 
-    @objc private func applicationDidResignActive(_ notification: Notification) {
+    func applicationDidResignActive(_ notification: Notification) {
         closePopover()
     }
 }
