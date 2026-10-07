@@ -141,7 +141,7 @@ final class NewRepoModel: ObservableObject {
     }
 
     func create() {
-        guard canCreate, let cli, let destination else { return }
+        guard canCreate, let cli, let login, let destination else { return }
         let repoName = name
         let directory = cloneDirectory
         let isPublic = isPublic
@@ -149,7 +149,7 @@ final class NewRepoModel: ObservableObject {
 
         Task {
             do {
-                try await cli.createRepository(name: repoName, isPublic: isPublic, in: directory)
+                try await cli.createRepository(owner: login, name: repoName, isPublic: isPublic, in: directory)
                 name = ""
                 self.isPublic = false
                 phase = .succeeded(name: repoName, path: destination)

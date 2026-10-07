@@ -7,12 +7,16 @@ Click the **+** in the menu bar, type a name, and press Return.
 - Checks the repository name against GitHub's rules as you type. A green tick means the name is valid, isn't already used on your account, and has no matching folder in the clone location. Invalid names get a cleaned-up suggestion, for example `My Cool Repo` becomes `My-Cool-Repo`.
 - Has a folder picker for where to clone. The last folder you used is remembered.
 - Creates repositories as **private** unless you tick **Make public**.
+- Every new repository starts with a README committed to `main`, so `main` is always the default branch.
 - When it's done, you can open the new clone in Finder, Terminal, or on GitHub.
 
 The app doesn't store any GitHub credentials. It runs the [GitHub CLI](https://cli.github.com) (`gh`), which you've already signed in to:
 
 ```sh
-gh repo create <name> --private --clone   # run from the folder you chose
+gh repo create <name> --private --add-readme
+# If your GitHub account names first branches something other than main:
+gh api -X POST repos/<you>/<name>/branches/<branch>/rename -f new_name=main
+gh repo clone <you>/<name>                 # run from the folder you chose
 ```
 
 ## Requirements

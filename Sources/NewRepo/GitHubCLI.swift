@@ -133,13 +133,33 @@ struct GitHubCLI {
         throw CLIError(message: result.errorMessage)
     }
 
-    /// Creates the repo on GitHub and clones it into `directory/name`.
-    func createRepository(name: String, isPublic: Bool, in directory: URL) async throws {
-        let result = try await Shell.run(
+    /// Creates the repo on GitHub with a README on a `main` branch, then clones it into `directory/name`.
+    func createRepository(owner: String, name: String, isPublic: Bool, in directory: URL) async throws {
+        let create = try await Shell.run(
             executable,
-            ["repo", "create", name, isPublic ? "--public" : "--private", "--clone"],
-            in: directory
+            ["repo", "create", name, isPublic ? "--public" : "--private", "--add-readme"]
         )
-        guard result.status == 0 else { throw CLIError(message: result.errorMessage) }
+        guard create.status == 0 else { throw CLIError(message: create.errorMessage) }
+
+        // GitHub names the first branch from your account settings, so make sure it's `main`.
+        let repo = "repos/\(owner)/\(name)"
+        let defaultBranch = try await Shell.run(executable, ["api", repo, "--jq", ".default_branch"])
+        guard defaultBranch.status == 0 else {
+            throw CLIError(message: "Created \(name) but couldn’t read its default branch: \(defaultBranch.errorMessage)")
+        }
+        if defaultBranch.stdout != "main" {
+            let rename = try await Shell.run(
+                executable,
+                ["api", "-X", "POST", "\(repo)/branches/\(defaultBranch.stdout)/rename", "-f", "new_name=main", "--silent"]
+            )
+            guard rename.status == 0 else {
+                throw CLIError(message: "Created \(name) but couldn’t rename “\(defaultBranch.stdout)” to main: \(rename.errorMessage)")
+            }
+        }
+
+        let clone = try await Shell.run(executable, ["repo", "clone", "\(owner)/\(name)"], in: directory)
+        guard clone.status == 0 else {
+            throw CLIError(message: "Created \(name) on GitHub but couldn’t clone it: \(clone.errorMessage)")
+        }
     }
 }
